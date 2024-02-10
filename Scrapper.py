@@ -7,25 +7,40 @@ from selenium.webdriver.support import expected_conditions as EC
 
 def get_id()->list:
     driver = webdriver.Chrome()
-    driver.get("https://www.dailymotion.com/tseries2")
-    wait = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.TAG_NAME, 'body')))
-    for _ in range(50):
-        driver.find_element(By.TAG_NAME, 'body').send_keys(Keys.PAGE_DOWN)
-        time.sleep(1)
-    # time.sleep(30)
-    video_links = driver.find_elements(By.CSS_SELECTOR, '.PageLayout__pageGrid___ToE9k a')
-    n = 500
     id_list = []
-    for link in video_links:
-        href_value = link.get_attribute('href')
-        id = href_value.split('/')[-1]
-        id = id_list.append(id)
-        n=n-1
-        if n == 0:
-            break
-    print(len(id_list))
-    driver.quit()
-    return id_list
+
+    try:
+        driver.get("https://www.dailymotion.com/tseries2")
+        wait = WebDriverWait(driver, 30).until(
+            EC.presence_of_element_located((By.TAG_NAME, 'body'))
+        )
+        wait = WebDriverWait(driver, 30).until(
+            EC.presence_of_element_located((By.CSS_SELECTOR, '.PageLayout__pageGrid___ToE9k'))
+        )
+
+        while True:
+            id_list = []
+            driver.find_element(By.TAG_NAME, 'body').send_keys(Keys.PAGE_DOWN)
+            time.sleep(1)
+            new_links = set(driver.find_elements(By.CSS_SELECTOR, '.PageLayout__pageGrid___ToE9k a'))
+            id_set = set()
+
+            for link in new_links:
+                href_value = link.get_attribute('href')
+                id_set.add(href_value.split('/')[-1])
+
+            id_list = list(id_set)[:500]
+            # print(len(id_list))
+
+            if len(id_list) == 500:
+                break
+
+    except Exception as e:
+        print(f"An error occurred: {e}")
+
+    finally:
+        driver.quit()
+        return id_list if id_list else []
 
 def char_counter(id_list)->dict:
     char_count = {}
